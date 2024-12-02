@@ -1,13 +1,40 @@
 package main
 
 import (
-	"math/rand"
+	"context"
+	"log"
+	"urlShortener/config"
+	"urlShortener/internal/handlers"
+	mongodb "urlShortener/internal/repository/MongoDB"
+	"urlShortener/internal/service"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func main() {
+	cfg, err := config.LoadConfig()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(cfg.MongoURI))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer client.Disconnect(context.Background())
+
+	repo := mongodb.NewMongoRepository(client, cfg.DBName)
+	generator := service.NewShortCodeGenerator(6)
+	urlService := service.NewUrlService(repo, generator)
+
+	handler := handlers.NewURLHandler(urlService, cfg.BaseUrl)
+
 	e := echo.New()
 
 	//Middleware
@@ -15,17 +42,11 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-}
+	//API
+	e.Static("/", "static")
+	e.POST("/api/shorten", handler.CreateShortURL)
+	e.GET("/:code", handler.RedirectToURL)
 
-func GenerateString(size int) string {
-
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
-	b := make([]byte, size)
-
-	for i := range b {
-		b[i] = charset[rand.Intn(len(charset))]
-	}
-	return string(b)
+	e.Start(":" + cfg.Port)
 
 }

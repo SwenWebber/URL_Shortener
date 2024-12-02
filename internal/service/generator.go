@@ -1,6 +1,9 @@
 package service
 
-import "math/rand"
+import (
+	"log"
+	"math/rand"
+)
 
 type shortCodeGenerator struct {
 	length int
@@ -20,5 +23,6 @@ func (g *shortCodeGenerator) Generate() string {
 	for i := range result {
 		result[i] = g.chars[rand.Intn(len(g.chars))]
 	}
+	log.Printf("shortCode generated")
 	return string(result)
 }

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            border-radius: 4px;
+            background-color: #4CAF50;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8 text-center">URL Shortener</h1>
+        <form id="urlForm" class="mb-8">
+            <div class="flex gap-4">
+                <input type="url" id="urlInput" placeholder="Enter a URL to shorten" required
+                    class="flex-grow px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button type="submit" id="submitButton"
+                    class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    Shorten
+                </button>
+            </div>
+        </form>
+        <div id="recentUrls" class="hidden">
+            <h2 class="text-2xl font-semibold mb-4">Recent Shortened URLs</h2>
+            <ul id="urlList" class="space-y-4"></ul>
+        </div>
+    </div>
+
+    <div id="toast" class="toast" role="alert" aria-live="polite"></div>
+
+    <script>
+        const urlForm = document.getElementById('urlForm');
+        const urlInput = document.getElementById('urlInput');
+        const submitButton = document.getElementById('submitButton');
+        const recentUrls = document.getElementById('recentUrls');
+        const urlList = document.getElementById('urlList');
+        const toast = document.getElementById('toast');
+
+        let shortenedURLs = [];
+
+        urlForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const url = urlInput.value;
+            submitButton.disabled = true;
+            submitButton.textContent = 'Shortening...';
+
+            try {
+                const response = await axios.post('/api/shorten', { url });
+                const newShortenedURL = {
+                    originalUrl: url,
+                    shortUrl: response.data.short_url
+                };
+                shortenedURLs = [newShortenedURL, ...shortenedURLs.slice(0, 4)];
+                updateUrlList();
+                urlInput.value = '';
+                showToast('URL shortened successfully!');
+            } catch (error) {
+                console.error('Error shortening URL:', error);
+                showToast('Failed to shorten URL. Please try again.', 'error');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Shorten';
+            }
+        });
+
+        function updateUrlList() {
+            if (shortenedURLs.length > 0) {
+                recentUrls.classList.remove('hidden');
+                urlList.innerHTML = shortenedURLs.map((item, index) => `
+                    <li key="${index}" class="bg-white p-4 rounded-lg shadow">
+                        <p class="mb-2 text-sm text-gray-600">Original: ${item.originalUrl}</p>
+                        <div class="flex items-center gap-2">
+                            <span class="font-medium">${item.shortUrl}</span>
+                            <button onclick="copyToClipboard('${item.shortUrl}')"
+                                class="px-2 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2">
+                                Copy
+                            </button>
+                        </div>
+                    </li>
+                `).join('');
+            }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+            showToast('Short URL copied to clipboard.');
+        }
+
+        function showToast(message, type = 'success') {
+            toast.textContent = message;
+            toast.className = `toast show ${type === 'error' ? 'bg-red-500' : 'bg-green-500'}`;
+            setTimeout(() => {
+                toast.className = 'toast';
+            }, 3000);
+        }
+    </script>
+</body>
+
+</html>
