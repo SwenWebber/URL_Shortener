@@ -25,6 +25,7 @@ WORKDIR /root/
 
 # Copy the binary from builder
 COPY --from=builder /app/main .
+COPY --from=builder /app/static ./static
 
 # Copy any config files if needed
 # COPY --from=builder /app/config ./config
