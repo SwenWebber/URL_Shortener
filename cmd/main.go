@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 	"urlShortener/config"
 	"urlShortener/internal/handlers"
 	mongodb "urlShortener/internal/repository/MongoDB"
@@ -21,7 +22,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(cfg.MongoURI))
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(cfg.MongoURI).
+		SetMaxPoolSize(5).
+		SetMinPoolSize(1).
+		SetMaxConnIdleTime(30*time.Second))
 
 	if err != nil {
 		log.Fatal(err)
