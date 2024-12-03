@@ -1,22 +1,36 @@
 
-#official image Go 1.23.1 
-FROM golang:1.23.1-alpine
+# Start from the official Golang base image
+FROM golang:1.23.1-alpine AS builder
 
-#installing required tools
-RUN apk add --no-cache git make
-
-#creating workdir
+# Set working directory
 WORKDIR /app
-#copying dependency files
+
+# Copy go mod and sum files
 COPY go.mod go.sum ./
-#downloading dependencies
+
+# Download dependencies
 RUN go mod download
-#copy source code
+
+# Copy the source code
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build  -o main cmd/main.go
+# Build the application
+RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd/main.go
 
-#exposing port
+# Start a new stage from scratch
+FROM alpine:latest
+
+# Set working directory
+WORKDIR /root/
+
+# Copy the binary from builder
+COPY --from=builder /app/main .
+
+# Copy any config files if needed
+# COPY --from=builder /app/config ./config
+
+# Expose the port the API runs on
 EXPOSE 8080
-#running the app
-CMD ["go","run","cmd/main.go"]
+
+# Command to run the executable
+CMD ["./main"]
