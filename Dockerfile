@@ -13,11 +13,10 @@ COPY go.mod go.sum ./
 #downloading dependencies
 RUN go mod download
 
-#hot reload
-RUN go install github.com/air-verse/air@latest
+
 #copy source code
 COPY . .
 #exposing port
 EXPOSE 8080
 #running the app
-CMD ["air","-c",".air.toml"]
+CMD ["go","run", "cmd/main.go"]
