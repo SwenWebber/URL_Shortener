@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"log"
 	"time"
 	"urlShortener/internal/models"
@@ -20,6 +21,10 @@ func NewUrlService(repo repository.URLRepository, generator URLGenerator) URLSer
 }
 
 func (s *urlService) CreateShortURL(longURL string) (*models.URL, error) {
+
+	if longURL == "" {
+		return nil, errors.New("url cannot be empty")
+	}
 
 	existing, _ := s.repo.FindByLongUrl(longURL)
 
