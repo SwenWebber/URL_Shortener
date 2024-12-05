@@ -21,9 +21,9 @@ This URL shortener application provides a clean and efficient way to create shor
 ### Installing
 
 * Clone the repository
-  ```
-   git clone https://github.com/SwenWebber/URL_Shortener.git
-  ```
+```
+ git clone https://github.com/SwenWebber/URL_Shortener.git
+```
 ### Executing program
 
 * Install dependencies
